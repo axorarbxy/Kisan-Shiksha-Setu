@@ -21,6 +21,7 @@ import type {
   ObservationInput,
   Page,
 } from "@/lib/api/schemas";
+import { useObservationDraftStore } from "@/stores/observation-draft-store";
 import { qk } from "@/lib/query/keys";
 import {
   fetchPage,
@@ -120,28 +121,55 @@ type AddObservationVariables = {
   experimentId: string;
   observation: ObservationInput;
   mockScenario?: "server-error" | "unprocessable";
+  draftId?: string;
 };
 
 type ObservationContext = {
   previous?: InfiniteData<Page<Observation>, string | undefined>;
+  draftId: string;
 };
 
-export function useAddObservation() {
+export function useCreateObservation() {
   const queryClient = useQueryClient();
+  const upsertDraft = useObservationDraftStore((state) => state.upsertDraft);
+  const removeDraft = useObservationDraftStore((state) => state.removeDraft);
+  const markQueued = useObservationDraftStore((state) => state.markQueued);
+  const markFailed = useObservationDraftStore((state) => state.markFailed);
   return useMutation<
     Observation,
     Error,
     AddObservationVariables,
     ObservationContext
   >({
-    mutationFn: ({ experimentId, observation, mockScenario }) =>
-      request(`/experiments/${encodeURIComponent(experimentId)}/observations`, {
-        method: "POST",
-        body: observationInputSchema.parse(observation),
-        schema: observationSchema,
-        mockScenario,
-      }),
-    onMutate: async ({ experimentId, observation }) => {
+    mutationFn: ({ experimentId, observation, mockScenario }) => {
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        throw new Error("You are offline; the observation is saved for sync.");
+      }
+      return request(
+        `/experiments/${encodeURIComponent(experimentId)}/observations`,
+        {
+          method: "POST",
+          body: observationInputSchema.parse(observation),
+          schema: observationSchema,
+          mockScenario,
+        },
+      );
+    },
+    onMutate: async ({ experimentId, observation, draftId }) => {
+      const localId = draftId ?? crypto.randomUUID();
+      if (!draftId) {
+        upsertDraft({
+          localId,
+          experimentId,
+          date: observation.date,
+          metric: observation.metric,
+          value: String(observation.value),
+          ...(observation.unit ? { unit: observation.unit } : {}),
+          ...(observation.notes ? { notes: observation.notes } : {}),
+          createdAt: Date.now(),
+          syncStatus: "draft",
+        });
+      }
       const queryKey = qk.experiments.observations(experimentId);
       await queryClient.cancelQueries({ queryKey });
       const previous =
@@ -177,7 +205,7 @@ export function useAddObservation() {
           InfiniteData<Page<Observation>, string | undefined>
         >(queryKey, { pages: [firstPage], pageParams: [undefined] });
       }
-      return { previous };
+      return { previous, draftId: localId };
     },
     onError: (error, variables, context) => {
       if (context?.previous) {
@@ -190,12 +218,28 @@ export function useAddObservation() {
           queryKey: qk.experiments.observations(variables.experimentId),
         });
       }
-      notifyMutationError(error);
+      if (context) {
+        if (typeof navigator !== "undefined" && !navigator.onLine) {
+          markQueued(context.draftId);
+        } else {
+          markFailed(context.draftId);
+        }
+      }
+      if (typeof navigator === "undefined" || navigator.onLine) {
+        notifyMutationError(error);
+      }
     },
-    onSuccess: (_observation, variables) => {
+    onSuccess: (_observation, variables, context) => {
+      if (context) {
+        removeDraft(context.draftId);
+      }
       void queryClient.invalidateQueries({
         queryKey: qk.experiments.observations(variables.experimentId),
       });
     },
   });
+}
+
+export function useAddObservation() {
+  return useCreateObservation();
 }

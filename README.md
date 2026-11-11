@@ -24,3 +24,8 @@ shared cache keys are in `src/lib/query/keys.ts`. With
 Use `?scenario=empty`, `?scenario=unauthorized`, `?scenario=unprocessable`, or
 `?scenario=server-error` to exercise list and error states. The development-only
 `/design/data-layer` page demonstrates optimistic observation updates and rollback.
+
+Browser-only UI and onboarding state live in `src/stores/`. Sidebar preferences,
+onboarding progress, and unsent observation drafts are persisted locally; queued
+observation drafts are replayed when the browser comes back online. API data
+remains in TanStack Query.

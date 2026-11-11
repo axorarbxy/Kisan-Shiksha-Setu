@@ -24,9 +24,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useUiStore } from "@/stores/ui-store";
 
-const SIDEBAR_COOKIE_NAME = "sidebar_state";
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const SIDEBAR_WIDTH = "16rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
 const SIDEBAR_WIDTH_ICON = "3rem";
@@ -54,7 +53,6 @@ function useSidebar() {
 }
 
 function SidebarProvider({
-  defaultOpen = true,
   open: openProp,
   onOpenChange: setOpenProp,
   className,
@@ -62,36 +60,52 @@ function SidebarProvider({
   children,
   ...props
 }: React.ComponentProps<"div"> & {
-  defaultOpen?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }) {
   const isMobile = useIsMobile();
-  const [openMobile, setOpenMobile] = React.useState(false);
-
-  // This is the internal state of the sidebar.
-  // We use openProp and setOpenProp for control from outside the component.
-  const [_open, _setOpen] = React.useState(defaultOpen);
-  const open = openProp ?? _open;
+  const sidebarCollapsed = useUiStore((state) => state.sidebarCollapsed);
+  const mobileNavOpen = useUiStore((state) => state.mobileNavOpen);
+  const toggleStoredSidebar = useUiStore((state) => state.toggleSidebar);
+  const setSidebarCollapsed = useUiStore(
+    (state) => state.setSidebarCollapsed,
+  );
+  const setStoredMobileNav = useUiStore((state) => state.setMobileNav);
+  const open = openProp ?? !sidebarCollapsed;
+  const openMobile = mobileNavOpen;
   const setOpen = React.useCallback(
     (value: boolean | ((value: boolean) => boolean)) => {
       const openState = typeof value === "function" ? value(open) : value;
       if (setOpenProp) {
         setOpenProp(openState);
       } else {
-        _setOpen(openState);
+        setSidebarCollapsed(!openState);
       }
-
-      // This sets the cookie to keep the sidebar state.
-      document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
     },
-    [setOpenProp, open],
+    [setOpenProp, open, setSidebarCollapsed],
   );
+  const setOpenMobile = setStoredMobileNav;
 
   // Helper to toggle the sidebar.
   const toggleSidebar = React.useCallback(() => {
-    return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open);
-  }, [isMobile, setOpen, setOpenMobile]);
+    if (isMobile) {
+      setOpenMobile(!openMobile);
+      return;
+    }
+    if (setOpenProp) {
+      setOpen(!open);
+    } else {
+      toggleStoredSidebar();
+    }
+  }, [
+    isMobile,
+    open,
+    openMobile,
+    setOpen,
+    setOpenMobile,
+    setOpenProp,
+    toggleStoredSidebar,
+  ]);
 
   // Adds a keyboard shortcut to toggle the sidebar.
   React.useEffect(() => {

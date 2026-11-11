@@ -49,6 +49,7 @@ import { RoleBadge } from "@/components/shared/role-badge";
 import { navByRole, roleHome, settingsNavItem } from "@/config/nav";
 import type { NavItem, Role } from "@/config/nav";
 import { useRoleStore } from "@/stores/role-store";
+import { useDevSessionStore } from "@/stores/dev-session-store";
 
 function getPathRole(pathname: string): Role | null {
   return getRole(pathname.split("/")[1]);
@@ -211,11 +212,16 @@ function AppUserMenu() {
 }
 
 function DevelopmentRoleMenu({ role }: { role: Role }) {
-  const router = useRouter();
-
   if (process.env.NODE_ENV !== "development") {
     return null;
   }
+
+  return <DevelopmentRoleSwitcher role={role} />;
+}
+
+function DevelopmentRoleSwitcher({ role }: { role: Role }) {
+  const router = useRouter();
+  const setDevRole = useDevSessionStore((state) => state.setRole);
 
   return (
     <Select
@@ -223,6 +229,7 @@ function DevelopmentRoleMenu({ role }: { role: Role }) {
       onValueChange={(value) => {
         const nextRole = getRole(value);
         if (nextRole) {
+          setDevRole(nextRole);
           router.push(roleHome[nextRole]);
         }
       }}

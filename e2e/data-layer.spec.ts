@@ -1,4 +1,7 @@
 import { expect, test } from "@playwright/test";
+import { migrateDraftState } from "../src/stores/observation-draft-store";
+import { migrateOnboardingState } from "../src/stores/onboarding-store";
+import { migrateUiState } from "../src/stores/ui-store";
 
 test("MSW serves the API contract for domain endpoints", async ({ page }) => {
   await page.goto("/");
@@ -140,4 +143,35 @@ test("observation creation updates the cache optimistically and rolls back on er
   await expect(
     page.getByText("The mock server encountered an error."),
   ).toBeVisible();
+});
+
+test("persisted store migrations accept v0 payloads", () => {
+  expect(migrateUiState({ sidebarCollapsed: true }, 0)).toEqual({
+    sidebarCollapsed: true,
+  });
+  expect(migrateOnboardingState({ step: 2, data: { school: "A" } }, 0)).toEqual(
+    { step: 2, data: { school: "A" } },
+  );
+  expect(migrateDraftState({ drafts: {} }, 0)).toEqual({ drafts: {} });
+});
+
+test("offline observations are queued and sync when connectivity returns", async ({
+  page,
+}) => {
+  await page.goto("/design/data-layer");
+  const count = page.getByRole("status");
+  await expect(count).toHaveText("Observations: 3");
+
+  await page.context().setOffline(true);
+  await page.getByRole("button", { name: "Add observation" }).click();
+  await expect(page.getByText("Saved offline, will sync")).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(() => localStorage.getItem("kss.observation-drafts")),
+    )
+    .toContain('"syncStatus":"queued"');
+
+  await page.context().setOffline(false);
+  await expect(count).toHaveText("Observations: 4", { timeout: 10_000 });
+  await expect(page.getByText("Saved offline, will sync")).toHaveCount(0);
 });
