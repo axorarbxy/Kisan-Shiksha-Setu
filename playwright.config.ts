@@ -21,6 +21,7 @@ export default defineConfig({
     env: {
       NEXT_PUBLIC_API_URL: "http://localhost:8000",
       NEXT_PUBLIC_API_MOCKING: "enabled",
+      NEXT_PUBLIC_SURVEY_URL: "",
     },
   },
 });

@@ -1,13 +1,32 @@
 import { expect, test } from "@playwright/test";
 
 test("loads the Kisan Shiksha Setu home page", async ({ page }) => {
+  const apiRequests: string[] = [];
+  page.on("request", (request) => {
+    if (request.url().includes("localhost:8000")) {
+      apiRequests.push(request.url());
+    }
+  });
   await page.goto("/");
 
   await expect(
     page.getByRole("heading", {
-      name: "Connecting learners with education opportunities.",
+      name: "Where fieldwork becomes a classroom.",
     }),
   ).toBeVisible();
+  await expect(page.getByRole("link", { name: /Join as mentor/i })).toHaveAttribute(
+    "href",
+    "/register?role=mentor",
+  );
+  await expect(page.getByRole("link", { name: /Join as school/i })).toHaveAttribute(
+    "href",
+    "/register?role=school",
+  );
+  await expect(page.getByRole("link", { name: /Join as a college/i })).toHaveAttribute(
+    "href",
+    "/register?role=admin",
+  );
+  expect(apiRequests).toEqual([]);
 });
 
 test("shows design tokens in development", async ({ page }) => {
@@ -59,9 +78,9 @@ test("renders public, auth, and role-aware application routes", async ({
   page,
 }) => {
   const routes = [
-    ["/how-it-works", "How it works"],
-    ["/evidence", "Evidence"],
-    ["/survey", "Survey"],
+    ["/how-it-works", "Fieldwork, shared through four simple steps."],
+    ["/evidence", "Evidence that shapes our questions."],
+    ["/survey", "Help us shape the pilot."],
     ["/login", "Welcome back"],
     ["/register", "Join the pilot"],
   ] as const;
@@ -73,6 +92,54 @@ test("renders public, auth, and role-aware application routes", async ({
     ).toBeVisible();
     await expect(page).toHaveTitle(/· Kisan Shiksha Setu$/);
   }
+});
+
+test("how-it-works role tabs explain each participant's journey", async ({
+  page,
+}) => {
+  await page.goto("/how-it-works");
+
+  await expect(page.getByRole("heading", { name: "A mentor’s week" })).toBeVisible();
+  await page.getByRole("tab", { name: "School" }).click();
+  await expect(page.getByRole("heading", { name: "A school’s week" })).toBeVisible();
+  await page.getByRole("tab", { name: "College admin" }).click();
+  await expect(
+    page.getByRole("heading", { name: "A college admin’s week" }),
+  ).toBeVisible();
+  await expect(page.getByText(/1–3 hours a week alongside RAWE fieldwork/)).toBeVisible();
+});
+
+test("registration role cards preselect from role links", async ({ page }) => {
+  for (const [role, label] of [
+    ["mentor", /Mentor/],
+    ["school", /School/],
+    ["admin", /College admin/],
+  ] as const) {
+    await page.goto(`/register?role=${role}`);
+    await expect(page.getByRole("radio", { name: label })).toBeChecked();
+    await expect(page.getByLabel("Your name")).toBeVisible();
+  }
+});
+
+test("evidence page includes citations and marks abstract-only summary", async ({
+  page,
+}) => {
+  await page.goto("/evidence");
+  await expect(page.getByText(/Heliyon 11, e42163/)).toBeVisible();
+  await expect(page.getByText(/Front\. Hum\. Dyn\. 8:1782307/)).toBeVisible();
+  await expect(page.getByText(/Front\. Sustain\. Food Syst\. 10:1814235/)).toBeVisible();
+  await expect(page.getByText("Abstract-based summary")).toBeVisible();
+  await expect(
+    page.getByText("Summaries are our own reading of the papers; see originals for full detail."),
+  ).toBeVisible();
+});
+
+test("survey page shows configured URL instructions and a results placeholder", async ({
+  page,
+}) => {
+  await page.goto("/survey");
+  await expect(page.getByText("NEXT_PUBLIC_SURVEY_URL")).toBeVisible();
+  await expect(page.getByText("Results chart coming soon")).toBeVisible();
 });
 
 test("development role switcher navigates to the selected workspace", async ({

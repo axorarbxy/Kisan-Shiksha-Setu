@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, LoaderCircle } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   useForm,
   type Control,
@@ -289,6 +289,14 @@ export function RegisterForm() {
     },
   });
   const errors = form.formState.errors;
+
+  useEffect(() => {
+    const role = new URLSearchParams(window.location.search).get("role");
+    if (role === "mentor" || role === "school" || role === "admin") {
+      setSelectedRole(role);
+      form.setValue("role", role);
+    }
+  }, [form]);
 
   function chooseRole(value: string) {
     if (value === "mentor" || value === "school" || value === "admin") {

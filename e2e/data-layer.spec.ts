@@ -4,10 +4,10 @@ import { migrateOnboardingState } from "../src/stores/onboarding-store";
 import { migrateUiState } from "../src/stores/ui-store";
 
 test("MSW serves the API contract for domain endpoints", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/design");
   await expect(
     page.getByRole("heading", {
-      name: "Connecting learners with education opportunities.",
+      name: "Design tokens",
     }),
   ).toBeVisible();
   await page.evaluate(async () => {

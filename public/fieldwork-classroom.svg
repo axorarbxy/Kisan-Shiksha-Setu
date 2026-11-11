@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="620" viewBox="0 0 720 620" fill="none">
+  <rect width="720" height="620" rx="40" fill="#F5EFE3"/>
+  <circle cx="545" cy="145" r="72" fill="#EBDCC0"/>
+  <path d="M56 462c92-70 191-66 290-9 85 49 177 59 318-6v126H56V462Z" fill="#D5E7DC"/>
+  <path d="M56 510c119-61 216-34 310 9 82 37 181 30 298-21v75H56v-63Z" fill="#A9CFB8"/>
+  <path d="M102 460V269h156v191" fill="#FBF8F2" stroke="#1C4A37" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M88 273 180 201l92 72" fill="#CFB88C" stroke="#1C4A37" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M146 460V354h67v106" fill="#EBE0CB" stroke="#1C4A37" stroke-width="8"/>
+  <path d="M128 308h27m47 0h27" stroke="#1C4A37" stroke-width="8" stroke-linecap="round"/>
+  <path d="M340 400c57-80 126-80 183 0" stroke="#1C4A37" stroke-width="15" stroke-linecap="round"/>
+  <path d="M360 401v52m142-52v52" stroke="#1C4A37" stroke-width="12" stroke-linecap="round"/>
+  <path d="M350 453h161" stroke="#1C4A37" stroke-width="12" stroke-linecap="round"/>
+  <path d="M441 243c-5-61 2-105 32-144" stroke="#1C4A37" stroke-width="10" stroke-linecap="round"/>
+  <path d="M463 143c-43-3-69-30-68-65 41-1 67 19 68 65Z" fill="#78B091"/>
+  <path d="M470 121c13-41 43-59 81-48-9 41-38 60-81 48Z" fill="#4A8E6B"/>
+  <path d="M445 186c-38 1-59 24-58 57 37 1 59-19 58-57Z" fill="#A9CFB8"/>
+  <path d="M572 401c19-20 27-48 22-81-28 4-44 25-42 58-16-29-42-42-72-38 6 35 28 54 63 55" stroke="#1C4A37" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M566 401v56" stroke="#1C4A37" stroke-width="9" stroke-linecap="round"/>
+  <circle cx="326" cy="310" r="25" fill="#CFB88C"/>
+  <path d="M292 383c4-42 15-63 35-63s31 21 35 63" fill="#4A8E6B"/>
+  <path d="M327 342v48m-16-26-24 20m41-20 20 17" stroke="#1C4A37" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="409" cy="332" r="20" fill="#CFB88C"/>
+  <path d="M381 393c3-35 12-52 29-52s26 17 29 52" fill="#7B2FFF"/>
+  <path d="M410 365v35m-13-19-18 15m31-15 17 14" stroke="#1C4A37" stroke-width="6" stroke-linecap="round"/>
+</svg>

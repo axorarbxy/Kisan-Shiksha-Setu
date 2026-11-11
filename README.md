@@ -12,6 +12,9 @@ and registration forms use the MSW auth endpoints when
 versioned onboarding store until its profile update succeeds.
 The browser-side session cookie used by MSW is development-only; production
 session cookies must be issued and cleared by the backend with `HttpOnly`.
+Set `NEXT_PUBLIC_SITE_URL` to the canonical deployment URL for sitemap and
+Open Graph metadata. `NEXT_PUBLIC_SURVEY_URL` optionally embeds the validation
+form, and `NEXT_PUBLIC_CONTACT_EMAIL` configures the public contact link.
 
 ## Development
 
@@ -36,3 +39,12 @@ Browser-only UI and onboarding state live in `src/stores/`. Sidebar preferences,
 onboarding progress, and unsent observation drafts are persisted locally; queued
 observation drafts are replayed when the browser comes back online. API data
 remains in TanStack Query.
+
+## Public pages
+
+The public landing, how-it-works, evidence, and survey pages are server-rendered
+from typed copy in `src/content/public-pages.ts`. Only the how-it-works role
+tabs are interactive. `NEXT_PUBLIC_SURVEY_URL` enables the optional survey
+embed; `NEXT_PUBLIC_SITE_URL` configures the sitemap and canonical Open Graph
+base. The application providers are scoped to authenticated, auth, and design
+routes so public pages do not load query or mock-service-worker clients.
