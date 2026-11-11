@@ -48,8 +48,9 @@ import { Logo } from "@/components/shared/logo";
 import { RoleBadge } from "@/components/shared/role-badge";
 import { navByRole, roleHome, settingsNavItem } from "@/config/nav";
 import type { NavItem, Role } from "@/config/nav";
-import { useRoleStore } from "@/stores/role-store";
 import { useDevSessionStore } from "@/stores/dev-session-store";
+import { useLogin, useLogout, useMe } from "@/features/auth/hooks";
+import { RoleGate } from "@/components/shared/role-gate";
 
 function getPathRole(pathname: string): Role | null {
   return getRole(pathname.split("/")[1]);
@@ -178,6 +179,7 @@ function AppNavigation({ role }: { role: Role }) {
 
 function AppUserMenu() {
   const router = useRouter();
+  const logout = useLogout();
 
   return (
     <DropdownMenu>
@@ -202,9 +204,12 @@ function AppUserMenu() {
           <Settings2 aria-hidden="true" />
           Settings
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => router.push("/")}>
+        <DropdownMenuItem
+          disabled={logout.isPending}
+          onSelect={() => logout.mutate()}
+        >
           <LogOut aria-hidden="true" />
-          Log out
+          {logout.isPending ? "Logging out…" : "Log out"}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -222,6 +227,7 @@ function DevelopmentRoleMenu({ role }: { role: Role }) {
 function DevelopmentRoleSwitcher({ role }: { role: Role }) {
   const router = useRouter();
   const setDevRole = useDevSessionStore((state) => state.setRole);
+  const login = useLogin();
 
   return (
     <Select
@@ -230,7 +236,14 @@ function DevelopmentRoleSwitcher({ role }: { role: Role }) {
         const nextRole = getRole(value);
         if (nextRole) {
           setDevRole(nextRole);
-          router.push(roleHome[nextRole]);
+          if (process.env.NEXT_PUBLIC_API_MOCKING === "enabled") {
+            login.mutate({
+              email: `${nextRole}@kss.test`,
+              password: "password123",
+            });
+          } else {
+            router.push(roleHome[nextRole]);
+          }
         }
       }}
     >
@@ -255,16 +268,15 @@ function DevelopmentRoleSwitcher({ role }: { role: Role }) {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const selectedRole = useRoleStore((state) => state.selectedRole);
-  const setSelectedRole = useRoleStore((state) => state.setSelectedRole);
+  const me = useMe();
+  const role = me.data?.role;
   const pathRole = getPathRole(pathname);
-  const role = pathRole ?? selectedRole;
 
-  useEffect(() => {
-    if (pathRole) {
-      setSelectedRole(pathRole);
-    }
-  }, [pathRole, setSelectedRole]);
+  if (!role) {
+    return (
+      <RoleGate allow={["mentor", "school", "admin"]}>{children}</RoleGate>
+    );
+  }
 
   return (
     <SidebarProvider className="min-h-screen items-stretch">
@@ -278,7 +290,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           <DevelopmentRoleMenu role={role} />
           <AppUserMenu />
         </header>
-        {children}
+        <RoleGate allow={pathRole ? [pathRole] : ["mentor", "school", "admin"]}>
+          {children}
+        </RoleGate>
       </SidebarInset>
     </SidebarProvider>
   );

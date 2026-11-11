@@ -9,11 +9,11 @@ import {
   observationInputSchema,
   observationSchema,
   placementSchema,
-  registerInputSchema,
   schoolSchema,
   successResponseSchema,
   userSchema,
 } from "@/lib/api/schemas";
+import { registerSchema } from "@/features/auth/schemas";
 import type {
   Experiment,
   Observation,
@@ -182,34 +182,45 @@ function createId(prefix: string, items: { id: string }[]) {
   return `${prefix}-${items.length + 1}-${Date.now()}`;
 }
 
+const mockOnboardingProfiles = new Map<string, Record<string, unknown>>();
+
+function getMockSessionUser(request: Request) {
+  const sessionCookie = request.headers
+    .get("cookie")
+    ?.split(";")
+    .map((cookie) => cookie.trim())
+    .find((cookie) => cookie.startsWith("kss_session="));
+  const userId = sessionCookie?.slice("kss_session=".length);
+  return users.find((user) => user.id === userId);
+}
+
 export const handlers: RequestHandler[] = [
   http.post(apiPath("/auth/refresh"), async () => {
     await delay(200 + Math.floor(Math.random() * 401));
-    return HttpResponse.json({ refreshed: true });
+    return HttpResponse.json({ refreshed: false });
   }),
   http.post(apiPath("/auth/login"), async ({ request }) => {
     const failure = await beforeResponse(request);
     if (failure) return failure;
     const parsed = loginInputSchema.safeParse(await readJson(request));
     if (!parsed.success) return validationError(parsed.error);
-    if (parsed.data.email === "invalid@example.com") {
+    const user = users.find((item) => item.email === parsed.data.email);
+    if (!user || parsed.data.password !== "password123") {
       return errorResponse(
         422,
         "INVALID_CREDENTIALS",
-        "Email or password is incorrect.",
+        "That email or password didn’t match.",
         {
-          email: ["Email or password is incorrect."],
+          email: ["That email or password didn’t match."],
         },
       );
     }
-    const user =
-      users.find((item) => item.email === parsed.data.email) ?? users[0];
     return HttpResponse.json(userSchema.parse(user));
   }),
   http.post(apiPath("/auth/register"), async ({ request }) => {
     const failure = await beforeResponse(request);
     if (failure) return failure;
-    const parsed = registerInputSchema.safeParse(await readJson(request));
+    const parsed = registerSchema.safeParse(await readJson(request));
     if (!parsed.success) return validationError(parsed.error);
     if (users.some((user) => user.email === parsed.data.email)) {
       return errorResponse(
@@ -221,7 +232,12 @@ export const handlers: RequestHandler[] = [
         },
       );
     }
-    const newUser: User = { id: createId("user", users), ...parsed.data };
+    const newUser: User = {
+      id: createId("user", users),
+      name: parsed.data.name,
+      email: parsed.data.email,
+      role: parsed.data.role,
+    };
     users.push(newUser);
     return HttpResponse.json(userSchema.parse(newUser), { status: 201 });
   }),
@@ -233,10 +249,32 @@ export const handlers: RequestHandler[] = [
   http.get(apiPath("/auth/me"), async ({ request }) => {
     const failure = await beforeResponse(request);
     if (failure) return failure;
-    const user = users[0];
+    const user = getMockSessionUser(request);
     return user
       ? HttpResponse.json(userSchema.parse(user))
       : errorResponse(401, "UNAUTHENTICATED", "Please log in to continue.");
+  }),
+  http.patch(apiPath("/auth/profile"), async ({ request }) => {
+    const failure = await beforeResponse(request);
+    if (failure) return failure;
+    const user = getMockSessionUser(request);
+    if (!user) {
+      return errorResponse(401, "UNAUTHENTICATED", "Please log in to continue.");
+    }
+    const body = await readJson(request);
+    if (
+      typeof body !== "object" ||
+      body === null ||
+      !("role" in body) ||
+      body.role !== user.role ||
+      !("data" in body) ||
+      typeof body.data !== "object" ||
+      body.data === null
+    ) {
+      return errorResponse(422, "VALIDATION_ERROR", "Please check your profile details.");
+    }
+    mockOnboardingProfiles.set(user.id, body.data as Record<string, unknown>);
+    return HttpResponse.json(successResponseSchema.parse({ success: true }));
   }),
 
   http.get(apiPath("/mentors"), async ({ request }) => {

@@ -2,9 +2,16 @@
 
 Frontend scaffold built with Next.js, React 19, TypeScript, and Tailwind CSS v4.
 
-## Documentation
+## Authentication and onboarding
 
-The ten project documentation links will be added when those documents are available.
+Authentication uses TanStack Query for the current user (`GET /auth/me`) and
+backend-managed HttpOnly session cookies. Middleware only performs an optimistic
+cookie check; API authorization remains the backend's responsibility. The login
+and registration forms use the MSW auth endpoints when
+`NEXT_PUBLIC_API_MOCKING=enabled`, and onboarding progress is saved in the
+versioned onboarding store until its profile update succeeds.
+The browser-side session cookie used by MSW is development-only; production
+session cookies must be issued and cleared by the backend with `HttpOnly`.
 
 ## Development
 

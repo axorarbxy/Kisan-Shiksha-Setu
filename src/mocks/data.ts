@@ -43,6 +43,9 @@ export const users: User[] = [
     email: "admin@kss.example",
     role: "admin",
   },
+  { id: "mentor-demo", name: "Demo Mentor", email: "mentor@kss.test", role: "mentor" },
+  { id: "school-demo", name: "Demo School", email: "school@kss.test", role: "school" },
+  { id: "admin-demo", name: "Demo Admin", email: "admin@kss.test", role: "admin" },
 ];
 
 const villages = [

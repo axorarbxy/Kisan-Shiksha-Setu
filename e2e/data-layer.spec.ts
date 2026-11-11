@@ -62,6 +62,8 @@ test("MSW serves the API contract for domain endpoints", async ({ page }) => {
         email: `new-${Date.now()}@kss.example`,
         password: "password123",
         role: "mentor",
+        college: "Test College",
+        year: "2",
       }),
       call("/auth/logout", "POST"),
       call("/matches", "POST", {
@@ -109,7 +111,9 @@ test("MSW serves the API contract for domain endpoints", async ({ page }) => {
   });
 
   for (const response of responses.gets) {
-    expect(response.status, response.url).toBe(200);
+    expect(response.status, response.url).toBe(
+      response.url === "/auth/me" ? 401 : 200,
+    );
   }
   for (const response of responses.posts) {
     const expectedStatus =

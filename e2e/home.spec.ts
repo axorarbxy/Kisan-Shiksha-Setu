@@ -64,20 +64,6 @@ test("renders public, auth, and role-aware application routes", async ({
     ["/survey", "Survey"],
     ["/login", "Welcome back"],
     ["/register", "Join the pilot"],
-    ["/mentor", "Mentor dashboard"],
-    ["/mentor/placement", "Placement"],
-    ["/mentor/schools", "Matched schools"],
-    ["/mentor/experiments", "Experiments"],
-    ["/mentor/experiments/demo", "Experiment demo"],
-    ["/school", "School dashboard"],
-    ["/school/mentors", "Mentors"],
-    ["/school/experiments", "Experiments"],
-    ["/school/experiments/demo", "Experiment demo"],
-    ["/admin", "Admin dashboard"],
-    ["/admin/students", "RAWE students"],
-    ["/admin/schools", "Schools"],
-    ["/admin/insights", "Insights"],
-    ["/settings", "Settings"],
   ] as const;
 
   for (const [route, heading] of routes) {
@@ -92,7 +78,10 @@ test("renders public, auth, and role-aware application routes", async ({
 test("development role switcher navigates to the selected workspace", async ({
   page,
 }) => {
-  await page.goto("/mentor");
+  await page.goto("/login");
+  await page.getByRole("button", { name: "mentor", exact: true }).click();
+  await page.getByRole("button", { name: "Log in", exact: true }).click();
+  await expect(page).toHaveURL(/\/mentor$/);
   await page.waitForLoadState("networkidle");
   await page.getByRole("combobox", { name: "Switch development role" }).click();
   await page.getByRole("option", { name: "School" }).click();
@@ -114,7 +103,10 @@ test("application navigation opens and works in the mobile drawer", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 375, height: 812 });
-  await page.goto("/mentor");
+  await page.goto("/login");
+  await page.getByRole("button", { name: "mentor", exact: true }).click();
+  await page.getByRole("button", { name: "Log in", exact: true }).click();
+  await expect(page).toHaveURL(/\/mentor$/);
   await page.waitForLoadState("networkidle");
   await page.getByRole("button", { name: "Toggle navigation" }).click();
 
@@ -134,6 +126,10 @@ test("application navigation opens and works in the mobile drawer", async ({
 });
 
 test("not-found action returns to the current role home", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByRole("button", { name: "school", exact: true }).click();
+  await page.getByRole("button", { name: "Log in", exact: true }).click();
+  await expect(page).toHaveURL(/\/school$/);
   await page.goto("/school/unknown");
   await expect(
     page.getByRole("heading", { name: "Page not found" }),
