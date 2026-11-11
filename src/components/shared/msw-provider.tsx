@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+let workerStartPromise: Promise<void> | undefined;
+
 export function MswProvider() {
   const [error, setError] = useState<Error | null>(null);
 
@@ -10,15 +12,24 @@ export function MswProvider() {
       return;
     }
 
-    import("@/mocks/browser")
+    let isActive = true;
+    workerStartPromise ??= import("@/mocks/browser")
       .then(({ worker }) => worker.start({ onUnhandledFrame: "bypass" }))
-      .catch((cause: unknown) => {
+      .then(() => undefined);
+
+    workerStartPromise.catch((cause: unknown) => {
+      if (isActive) {
         setError(
           cause instanceof Error
             ? cause
             : new Error("Failed to start the MSW service worker."),
         );
-      });
+      }
+    });
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   if (error) {
