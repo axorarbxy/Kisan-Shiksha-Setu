@@ -54,3 +54,91 @@ test("shows the component library and supports table sorting", async ({
     })
     .toBe("ascending");
 });
+
+test("renders public, auth, and role-aware application routes", async ({
+  page,
+}) => {
+  const routes = [
+    ["/how-it-works", "How it works"],
+    ["/evidence", "Evidence"],
+    ["/survey", "Survey"],
+    ["/login", "Welcome back"],
+    ["/register", "Join the pilot"],
+    ["/mentor", "Mentor dashboard"],
+    ["/mentor/placement", "Placement"],
+    ["/mentor/schools", "Matched schools"],
+    ["/mentor/experiments", "Experiments"],
+    ["/mentor/experiments/demo", "Experiment demo"],
+    ["/school", "School dashboard"],
+    ["/school/mentors", "Mentors"],
+    ["/school/experiments", "Experiments"],
+    ["/school/experiments/demo", "Experiment demo"],
+    ["/admin", "Admin dashboard"],
+    ["/admin/students", "RAWE students"],
+    ["/admin/schools", "Schools"],
+    ["/admin/insights", "Insights"],
+    ["/settings", "Settings"],
+  ] as const;
+
+  for (const [route, heading] of routes) {
+    await page.goto(route);
+    await expect(
+      page.getByRole("heading", { name: heading, exact: true }),
+    ).toBeVisible();
+    await expect(page).toHaveTitle(/· Kisan Shiksha Setu$/);
+  }
+});
+
+test("development role switcher navigates to the selected workspace", async ({
+  page,
+}) => {
+  await page.goto("/mentor");
+  await page.waitForLoadState("networkidle");
+  await page.getByRole("combobox", { name: "Switch development role" }).click();
+  await page.getByRole("option", { name: "School" }).click();
+
+  await expect(page).toHaveURL(/\/school$/);
+  await expect(
+    page.getByRole("heading", { name: "School dashboard" }),
+  ).toBeVisible();
+  await expect(page.getByText("School", { exact: true }).first()).toBeVisible();
+
+  await page.waitForLoadState("networkidle");
+  await page.getByRole("combobox", { name: "Switch development role" }).click();
+  await page.getByRole("option", { name: "Admin" }).click();
+  await expect(page).toHaveURL(/\/admin$/);
+  await expect(page.getByRole("link", { name: "RAWE students" })).toBeVisible();
+});
+
+test("application navigation opens and works in the mobile drawer", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto("/mentor");
+  await page.waitForLoadState("networkidle");
+  await page.getByRole("button", { name: "Toggle navigation" }).click();
+
+  const drawer = page.getByRole("dialog");
+  await expect(drawer).toBeVisible();
+  await drawer.getByRole("link", { name: "Matched schools" }).click();
+
+  await expect(page).toHaveURL(/\/mentor\/schools$/);
+  await expect(
+    page.getByRole("heading", { name: "Matched schools" }),
+  ).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(() => document.documentElement.scrollWidth <= 375),
+    )
+    .toBe(true);
+});
+
+test("not-found action returns to the current role home", async ({ page }) => {
+  await page.goto("/school/unknown");
+  await expect(
+    page.getByRole("heading", { name: "Page not found" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Back to home" }),
+  ).toHaveAttribute("href", "/school");
+});

@@ -4,7 +4,10 @@ import { inter } from "@/app/fonts";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Kisan Shiksha Setu",
+  title: {
+    default: "Kisan Shiksha Setu",
+    template: "%s · Kisan Shiksha Setu",
+  },
   description: "Connecting learners with education opportunities.",
 };
 

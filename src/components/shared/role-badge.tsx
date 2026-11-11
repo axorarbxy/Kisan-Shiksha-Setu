@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 const roleDetails = {
   mentor: { label: "Mentor", variant: "success" },
   school: { label: "School", variant: "neutral" },
+  admin: { label: "College admin", variant: "info" },
   "college-admin": { label: "College admin", variant: "info" },
 } as const;
 
