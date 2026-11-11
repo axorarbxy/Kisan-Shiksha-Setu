@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { ComponentsShowcase } from "@/app/(public)/design/components-showcase";
 
 const palettes = [
   {
@@ -153,6 +154,8 @@ export default function DesignPage() {
           </p>
         </div>
       </section>
+
+      <ComponentsShowcase />
     </main>
   );
 }

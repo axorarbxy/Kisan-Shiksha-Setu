@@ -2,6 +2,8 @@
 
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/sonner";
 import { QueryProvider } from "@/lib/query/query-provider";
 
 const MswProvider = dynamic(
@@ -14,9 +16,12 @@ const MswProvider = dynamic(
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
-    <>
+    <TooltipProvider>
       <MswProvider />
-      <QueryProvider>{children}</QueryProvider>
-    </>
+      <QueryProvider>
+        {children}
+        <Toaster position="bottom-right" />
+      </QueryProvider>
+    </TooltipProvider>
   );
 }

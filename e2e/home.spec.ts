@@ -24,3 +24,33 @@ test("shows design tokens in development", async ({ page }) => {
     page.getByText("Inter body sample", { exact: false }),
   ).toBeVisible();
 });
+
+test("shows the component library and supports table sorting", async ({
+  page,
+}) => {
+  await page.goto("/design");
+  await page.waitForLoadState("networkidle");
+
+  await expect(
+    page.getByRole("heading", { name: "shadcn/ui primitives" }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Accent CTA" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Disabled" })).toBeDisabled();
+  await expect(
+    page.getByRole("heading", { name: "Shared components" }),
+  ).toBeVisible();
+
+  const table = page.getByRole("table").first();
+  const mentorHeader = table.getByRole("columnheader", { name: /Mentor/ });
+
+  await expect(table.getByRole("row").nth(1)).toContainText("Asha Patel");
+  await expect
+    .poll(async () => {
+      if ((await mentorHeader.getAttribute("aria-sort")) === "ascending") {
+        return "ascending";
+      }
+      await mentorHeader.getByRole("button").click();
+      return mentorHeader.getAttribute("aria-sort");
+    })
+    .toBe("ascending");
+});
