@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  markMockWorkerFailed,
+  markMockWorkerReady,
+} from "@/lib/api/mock-readiness";
 
 let workerStartPromise: Promise<void> | undefined;
 
@@ -17,15 +21,23 @@ export function MswProvider() {
       .then(({ worker }) => worker.start({ onUnhandledFrame: "bypass" }))
       .then(() => undefined);
 
-    workerStartPromise.catch((cause: unknown) => {
-      if (isActive) {
-        setError(
-          cause instanceof Error
-            ? cause
-            : new Error("Failed to start the MSW service worker."),
-        );
-      }
-    });
+    void workerStartPromise.then(
+      () => {
+        if (isActive) {
+          markMockWorkerReady();
+        }
+      },
+      (cause: unknown) => {
+        if (isActive) {
+          const workerError =
+            cause instanceof Error
+              ? cause
+              : new Error("Failed to start the MSW service worker.");
+          markMockWorkerFailed(workerError);
+          setError(workerError);
+        }
+      },
+    );
 
     return () => {
       isActive = false;

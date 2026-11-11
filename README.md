@@ -14,3 +14,13 @@ pnpm typecheck
 pnpm lint
 pnpm test:e2e
 ```
+
+## Data layer
+
+API contracts and response validation live in `src/lib/api/schemas.ts` and
+`src/lib/api/client.ts`. Domain hooks under `src/features/` use TanStack Query;
+shared cache keys are in `src/lib/query/keys.ts`. With
+`NEXT_PUBLIC_API_MOCKING=enabled`, MSW serves the API from in-memory fixtures.
+Use `?scenario=empty`, `?scenario=unauthorized`, `?scenario=unprocessable`, or
+`?scenario=server-error` to exercise list and error states. The development-only
+`/design/data-layer` page demonstrates optimistic observation updates and rollback.
