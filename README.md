@@ -25,6 +25,27 @@ pnpm lint
 pnpm test:e2e
 ```
 
+## End-to-end tests and quality gates
+
+Playwright runs the E2E suite against the MSW-backed production build in both
+Desktop Chrome and Pixel 7 projects. The setup project signs in the three demo
+roles and saves storage states under the ignored `e2e/.auth/` directory. Each
+test resets its browser's mock API data before running.
+
+```bash
+pnpm typecheck
+pnpm lint
+pnpm exec playwright install chromium
+pnpm test:e2e
+```
+
+By default, Playwright builds and starts the production app. For a faster local
+iteration, set `PLAYWRIGHT_USE_DEV_SERVER=1` before `pnpm test:e2e`. Visual
+baselines live beside the visual spec; use
+`pnpm exec playwright test e2e/visual.spec.ts --update-snapshots` to refresh
+them intentionally. The CI workflow installs dependencies from the frozen
+lockfile, runs type and lint checks, and executes the full E2E suite.
+
 ## Data layer
 
 API contracts and response validation live in `src/lib/api/schemas.ts` and

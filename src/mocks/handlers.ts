@@ -187,6 +187,35 @@ const mockSchoolIds = new Map<string, string>([
   ["school-demo", "school-1"],
   ["school-user-1", "school-1"],
 ]);
+const initialMockData = {
+  experiments: structuredClone(experiments),
+  insights: structuredClone(insights),
+  matches: structuredClone(matches),
+  mentors: structuredClone(mentors),
+  observations: structuredClone(observations),
+  placements: structuredClone(placements),
+  schools: structuredClone(schools),
+  users: structuredClone(users),
+};
+
+function resetCollection<T>(target: T[], initial: T[]) {
+  target.splice(0, target.length, ...structuredClone(initial));
+}
+
+function resetMockData() {
+  resetCollection(experiments, initialMockData.experiments);
+  resetCollection(insights, initialMockData.insights);
+  resetCollection(matches, initialMockData.matches);
+  resetCollection(mentors, initialMockData.mentors);
+  resetCollection(observations, initialMockData.observations);
+  resetCollection(placements, initialMockData.placements);
+  resetCollection(schools, initialMockData.schools);
+  resetCollection(users, initialMockData.users);
+  mockOnboardingProfiles.clear();
+  mockSchoolIds.clear();
+  mockSchoolIds.set("school-demo", "school-1");
+  mockSchoolIds.set("school-user-1", "school-1");
+}
 
 function getMockSessionUser(request: Request) {
   const sessionCookie = request.headers
@@ -199,6 +228,10 @@ function getMockSessionUser(request: Request) {
 }
 
 export const handlers: RequestHandler[] = [
+  http.post(apiPath("/__mock/reset"), () => {
+    resetMockData();
+    return HttpResponse.json({ reset: true });
+  }),
   http.post(apiPath("/auth/refresh"), async () => {
     await delay(200 + Math.floor(Math.random() * 401));
     return HttpResponse.json({ refreshed: false });

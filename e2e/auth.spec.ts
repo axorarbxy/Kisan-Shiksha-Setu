@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test("unauthenticated users return to their requested route after login", async ({
   page,
@@ -38,7 +38,9 @@ test("registration supports all roles", async ({ browser }) => {
   ] as const;
 
   for (const { role, email } of cases) {
-    const context = await browser.newContext();
+    const context = await browser.newContext({
+      baseURL: "http://localhost:3000",
+    });
     const page = await context.newPage();
     await page.goto("/register");
     await page.getByRole("radio", { name: new RegExp(role, "i") }).click();
@@ -64,6 +66,35 @@ test("registration supports all roles", async ({ browser }) => {
     await expect(page).toHaveURL(/\/onboarding$/);
     await context.close();
   }
+});
+
+test("login and registration show client-side validation errors", async ({
+  page,
+}) => {
+  await page.goto("/login");
+  await page.getByLabel("Email", { exact: true }).fill("not-an-email");
+  await page.getByLabel("Password", { exact: true }).fill("short");
+  await page.getByRole("button", { name: "Log in", exact: true }).click();
+  await expect(page.getByText("Enter a valid email address.")).toBeVisible();
+  await expect(
+    page.getByText("Password must be at least 8 characters."),
+  ).toBeVisible();
+
+  await page.goto("/register");
+  await page.getByRole("radio", { name: /mentor/i }).click();
+  await page.getByRole("button", { name: "Create account" }).click();
+  await expect(page.getByText("Enter your name.")).toBeVisible();
+  await expect(page.getByText("Enter a valid email address.")).toBeVisible();
+});
+
+test("wrong password shows an authentication error", async ({ page }) => {
+  await page.goto("/login");
+  await page.getByLabel("Email", { exact: true }).fill("mentor@kss.test");
+  await page.getByLabel("Password", { exact: true }).fill("incorrect-password");
+  await page.getByRole("button", { name: "Log in", exact: true }).click();
+  await expect(
+    page.getByText("That email or password didn’t match."),
+  ).toBeVisible();
 });
 
 test("registration maps API field errors to the matching input", async ({
