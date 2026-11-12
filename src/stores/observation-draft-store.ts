@@ -18,7 +18,9 @@ export interface DraftObservation {
 
 interface DraftState {
   drafts: Record<string, DraftObservation>;
+  inFlightIds: Record<string, true>;
   upsertDraft: (draft: DraftObservation) => void;
+  markInFlight: (localId: string) => void;
   removeDraft: (localId: string) => void;
   markQueued: (localId: string) => void;
   markFailed: (localId: string) => void;
@@ -83,6 +85,7 @@ export const useObservationDraftStore = create<DraftState>()(
   persist(
     (set) => ({
       drafts: {},
+      inFlightIds: {},
       upsertDraft: (draft) => {
         if (
           draft.photoDataUrl &&
@@ -99,32 +102,42 @@ export const useObservationDraftStore = create<DraftState>()(
       removeDraft: (localId) =>
         set((state) => {
           const drafts = { ...state.drafts };
+          const inFlightIds = { ...state.inFlightIds };
           delete drafts[localId];
-          return { drafts };
+          delete inFlightIds[localId];
+          return { drafts, inFlightIds };
         }),
+      markInFlight: (localId) =>
+        set((state) => ({
+          inFlightIds: { ...state.inFlightIds, [localId]: true },
+        })),
       markQueued: (localId) =>
         set((state) => {
           const draft = state.drafts[localId];
-          return draft
-            ? {
-                drafts: {
-                  ...state.drafts,
-                  [localId]: { ...draft, syncStatus: "queued" },
-                },
-              }
-            : state;
+          if (!draft) return state;
+          const inFlightIds = { ...state.inFlightIds };
+          delete inFlightIds[localId];
+          return {
+            drafts: {
+              ...state.drafts,
+              [localId]: { ...draft, syncStatus: "queued" },
+            },
+            inFlightIds,
+          };
         }),
       markFailed: (localId) =>
         set((state) => {
           const draft = state.drafts[localId];
-          return draft
-            ? {
-                drafts: {
-                  ...state.drafts,
-                  [localId]: { ...draft, syncStatus: "failed" },
-                },
-              }
-            : state;
+          if (!draft) return state;
+          const inFlightIds = { ...state.inFlightIds };
+          delete inFlightIds[localId];
+          return {
+            drafts: {
+              ...state.drafts,
+              [localId]: { ...draft, syncStatus: "failed" },
+            },
+            inFlightIds,
+          };
         }),
     }),
     {

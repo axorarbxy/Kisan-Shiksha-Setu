@@ -16,6 +16,8 @@ import {
   notifyMutationError,
   type ListFilters,
 } from "@/features/query-utils";
+import { toast } from "sonner";
+import { appStrings } from "@/content/strings";
 
 export function useMentors(filters: ListFilters = {}) {
   return useInfiniteQuery({
@@ -55,6 +57,7 @@ export function useUpdateMentor() {
         schema: mentorProfileSchema,
       }),
     onSuccess: (mentor) => {
+      toast.success(appStrings.mentor.mentorProfileUpdated);
       queryClient.setQueryData(qk.mentors.detail(mentor.userId), mentor);
       void queryClient.invalidateQueries({ queryKey: qk.mentors.all });
     },

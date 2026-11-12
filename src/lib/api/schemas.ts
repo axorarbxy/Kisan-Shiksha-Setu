@@ -22,6 +22,7 @@ export const placementSchema = z.object({
 
 export const mentorProfileSchema = z.object({
   userId: z.string().min(1),
+  name: z.string().optional(),
   college: z.string().min(1),
   year: z.string().min(1),
   rawePlacement: placementSchema.optional(),
@@ -53,9 +54,12 @@ export const experimentSchema = z.object({
   title: z.string().min(1),
   hypothesis: z.string(),
   cropOrTopic: z.string().min(1),
+  successCriteria: z.string().optional(),
   plotType: z.enum(["family", "community"]),
   status: z.enum(["draft", "active", "completed"]),
   createdAt: z.string(),
+  sessionsAttended: z.number().int().nonnegative().optional(),
+  schoolComments: z.array(z.string()).optional(),
 });
 
 export const observationSchema = z.object({
@@ -67,6 +71,7 @@ export const observationSchema = z.object({
   unit: z.string().optional(),
   notes: z.string().optional(),
   photoUrl: z.string().url().optional(),
+  photoDataUrl: z.string().max(200_000).optional(),
 });
 
 export const insightSchema = z.object({

@@ -104,8 +104,20 @@ export async function request<T extends z.ZodType>(
     retryAfterRefresh = true,
   }: RequestOptions<T>,
 ): Promise<z.infer<T>> {
+  const urlScenario =
+    typeof window === "undefined"
+      ? undefined
+      : new URLSearchParams(window.location.search).get("scenario");
+  const activeMockScenario =
+    mockScenario ??
+    (urlScenario === "unauthorized" ||
+    urlScenario === "unprocessable" ||
+    urlScenario === "server-error" ||
+    urlScenario === "empty"
+      ? urlScenario
+      : undefined);
   await waitForMockWorker();
-  const response = await fetch(buildUrl(path, mockScenario), {
+  const response = await fetch(buildUrl(path, activeMockScenario), {
     method,
     credentials: "include",
     headers:
@@ -121,7 +133,7 @@ export async function request<T extends z.ZodType>(
         body,
         schema,
         signal,
-        mockScenario,
+        mockScenario: activeMockScenario,
         retryAfterRefresh: false,
       });
     }

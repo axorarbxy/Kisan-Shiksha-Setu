@@ -6,6 +6,7 @@ import { useCreateObservation } from "@/features/experiments/hooks";
 
 export function useSyncDrafts() {
   const drafts = useObservationDraftStore((state) => state.drafts);
+  const inFlightIds = useObservationDraftStore((state) => state.inFlightIds);
   const markQueued = useObservationDraftStore((state) => state.markQueued);
   const markFailed = useObservationDraftStore((state) => state.markFailed);
   const createObservation = useCreateObservation();
@@ -17,7 +18,8 @@ export function useSyncDrafts() {
     }
 
     const queuedDrafts = Object.values(drafts).filter(
-      (draft) => draft.syncStatus === "queued",
+      (draft) =>
+        draft.syncStatus === "queued" && !inFlightIds[draft.localId],
     );
     for (const draft of queuedDrafts) {
       if (syncing.current.has(draft.localId)) {
@@ -39,6 +41,9 @@ export function useSyncDrafts() {
             value,
             ...(draft.unit ? { unit: draft.unit } : {}),
             ...(draft.notes ? { notes: draft.notes } : {}),
+            ...(draft.photoDataUrl
+              ? { photoDataUrl: draft.photoDataUrl }
+              : {}),
           },
           draftId: draft.localId,
         });
@@ -48,15 +53,15 @@ export function useSyncDrafts() {
         syncing.current.delete(draft.localId);
       }
     }
-  }, [createObservation, drafts, markFailed]);
+  }, [createObservation, drafts, inFlightIds, markFailed]);
 
   useEffect(() => {
     for (const draft of Object.values(drafts)) {
-      if (draft.syncStatus === "draft") {
+      if (draft.syncStatus === "draft" && !inFlightIds[draft.localId]) {
         markQueued(draft.localId);
       }
     }
-  }, [drafts, markQueued]);
+  }, [drafts, inFlightIds, markQueued]);
 
   useEffect(() => {
     const handleOnline = () => {

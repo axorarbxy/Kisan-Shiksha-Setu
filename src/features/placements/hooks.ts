@@ -15,6 +15,8 @@ import {
   notifyMutationError,
   type ListFilters,
 } from "@/features/query-utils";
+import { toast } from "sonner";
+import { appStrings } from "@/content/strings";
 
 export function usePlacements(filters: ListFilters = {}) {
   return useInfiniteQuery({
@@ -36,6 +38,7 @@ export function useCreatePlacement() {
         schema: placementSchema,
       }),
     onSuccess: () => {
+      toast.success(appStrings.mentor.placementSaved);
       void queryClient.invalidateQueries({ queryKey: ["placements"] });
     },
     onError: notifyMutationError,
@@ -58,6 +61,7 @@ export function useUpdatePlacement() {
         schema: placementSchema,
       }),
     onSuccess: () => {
+      toast.success(appStrings.mentor.placementUpdated);
       void queryClient.invalidateQueries({ queryKey: ["placements"] });
     },
     onError: notifyMutationError,

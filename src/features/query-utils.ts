@@ -3,6 +3,7 @@ import type { z } from "zod";
 import { ApiError } from "@/lib/api/client";
 import { request, withQuery } from "@/lib/api/client";
 import type { Page } from "@/lib/api/schemas";
+import { appStrings } from "@/content/strings";
 
 export type ListFilters = Record<string, string | number | undefined>;
 
@@ -20,7 +21,7 @@ export async function fetchPage<T>(
 }
 
 export function notifyMutationError(error: Error) {
-  toast.error(error.message || "The request could not be completed.");
+  toast.error(error.message || appStrings.common.requestFailed);
 }
 
 export function mutationFieldErrors(error: unknown) {

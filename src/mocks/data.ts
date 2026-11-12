@@ -49,22 +49,22 @@ export const users: User[] = [
 ];
 
 const villages = [
-  "Rampur",
-  "Nandgaon",
-  "Sundarpur",
-  "Kheda",
-  "Basantpur",
-  "Amarpur",
-  "Devgaon",
-  "Shivpura",
+  "Field site 1",
+  "Field site 2",
+  "Field site 3",
+  "Field site 4",
+  "Field site 5",
+  "Field site 6",
+  "Field site 7",
+  "Field site 8",
 ] as const;
 
 export const placements: Placement[] = mentorNames.map((_, index) => ({
   id: `placement-${index + 1}`,
   village: villages[index % villages.length] ?? "Rampur",
-  district: ["Jaipur", "Pune", "Nashik", "Indore"][index % 4] ?? "Jaipur",
+  district: ["Sample district A", "Sample district B", "Sample district C"][index % 3] ?? "Sample district A",
   state:
-    ["Rajasthan", "Maharashtra", "Madhya Pradesh"][index % 3] ?? "Rajasthan",
+    "Sample state",
   startDate: `2026-07-${String((index % 20) + 1).padStart(2, "0")}`,
   endDate: `2026-10-${String((index % 20) + 1).padStart(2, "0")}`,
   status:
@@ -73,6 +73,7 @@ export const placements: Placement[] = mentorNames.map((_, index) => ({
 
 export const mentors: MentorProfile[] = mentorNames.map((_, index) => ({
   userId: `mentor-${index + 1}`,
+  name: mentorNames[index],
   college:
     ["State Agricultural University", "Rural Development College"][index % 2] ??
     "State Agricultural University",
@@ -85,11 +86,20 @@ export const mentors: MentorProfile[] = mentorNames.map((_, index) => ({
   hoursPerWeek: ([1, 3, 5] as const)[index % 3] ?? 1,
 }));
 
+mentors.push({
+  userId: "mentor-demo",
+  name: "Demo Mentor",
+  college: "State Agricultural University",
+  year: "Final year",
+  topics: ["soil health", "crop cycles"],
+  hoursPerWeek: 3,
+});
+
 export const schools: School[] = villages.map((village, index) => ({
   id: `school-${index + 1}`,
   name: `${village} Government Upper Primary School`,
   village,
-  district: ["Jaipur", "Pune", "Nashik", "Indore"][index % 4] ?? "Jaipur",
+  district: ["Sample district A", "Sample district B", "Sample district C"][index % 3] ?? "Sample district A",
   studentCount: 48 + index * 7,
   grades: "1–8",
   contactName:
@@ -162,11 +172,24 @@ export const observations: Observation[] = experiments.flatMap(
 
 export const insights: Insight[] = (
   ["school", "district", "program"] as const
-).map((scope) => ({
-  scope,
-  metric: "active experiments",
-  series: Array.from({ length: 6 }, (_, index) => ({
-    date: `2026-${String(index + 5).padStart(2, "0")}-01`,
-    value: 4 + index * (scope === "program" ? 5 : 2),
+).flatMap((scope) =>
+  (
+    ["active experiments", "completed experiments", "observations logged"] as const
+  ).map((metric) => ({
+    scope,
+    metric,
+    series: Array.from({ length: 6 }, (_, index) => {
+      const base =
+        metric === "active experiments"
+          ? experiments.filter((experiment) => experiment.status === "active").length
+          : metric === "completed experiments"
+            ? experiments.filter((experiment) => experiment.status === "completed").length
+            : observations.length;
+      const scopeFactor = scope === "program" ? 1 : scope === "district" ? 0.6 : 0.3;
+      return {
+        date: `2026-${String(index + 5).padStart(2, "0")}-01`,
+        value: Math.round((base * scopeFactor * (index + 1)) / 6),
+      };
+    }),
   })),
-}));
+);

@@ -29,6 +29,8 @@ import {
   notifyMutationError,
   type ListFilters,
 } from "@/features/query-utils";
+import { toast } from "sonner";
+import { appStrings } from "@/content/strings";
 
 export function useExperiments(filters: ListFilters = {}) {
   return useInfiniteQuery({
@@ -85,6 +87,7 @@ export function useCreateExperiment() {
         schema: experimentSchema,
       }),
     onSuccess: () => {
+      toast.success(appStrings.mentor.experimentCreated);
       void queryClient.invalidateQueries({ queryKey: ["experiments"] });
     },
     onError: notifyMutationError,
@@ -93,7 +96,12 @@ export function useCreateExperiment() {
 
 export function useUpdateExperiment() {
   const queryClient = useQueryClient();
-  return useMutation({
+  return useMutation<
+    Experiment,
+    Error,
+    { id: string; changes: Partial<Omit<Experiment, "id">> },
+    { previous?: Experiment }
+  >({
     mutationFn: ({
       id,
       changes,
@@ -106,14 +114,29 @@ export function useUpdateExperiment() {
         body: changes,
         schema: experimentSchema,
       }),
+    onMutate: async ({ id, changes }) => {
+      const queryKey = qk.experiments.detail(id);
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<Experiment>(queryKey);
+      if (previous) {
+        queryClient.setQueryData(queryKey, { ...previous, ...changes });
+      }
+      return { previous };
+    },
+    onError: (error, { id }, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(qk.experiments.detail(id), context.previous);
+      }
+      notifyMutationError(error);
+    },
     onSuccess: (experiment) => {
+      toast.success(appStrings.mentor.experimentUpdated);
       queryClient.setQueryData(
         qk.experiments.detail(experiment.id),
         experiment,
       );
       void queryClient.invalidateQueries({ queryKey: ["experiments"] });
     },
-    onError: notifyMutationError,
   });
 }
 
@@ -132,6 +155,7 @@ type ObservationContext = {
 export function useCreateObservation() {
   const queryClient = useQueryClient();
   const upsertDraft = useObservationDraftStore((state) => state.upsertDraft);
+  const markInFlight = useObservationDraftStore((state) => state.markInFlight);
   const removeDraft = useObservationDraftStore((state) => state.removeDraft);
   const markQueued = useObservationDraftStore((state) => state.markQueued);
   const markFailed = useObservationDraftStore((state) => state.markFailed);
@@ -166,10 +190,14 @@ export function useCreateObservation() {
           value: String(observation.value),
           ...(observation.unit ? { unit: observation.unit } : {}),
           ...(observation.notes ? { notes: observation.notes } : {}),
+          ...(observation.photoDataUrl
+            ? { photoDataUrl: observation.photoDataUrl }
+            : {}),
           createdAt: Date.now(),
           syncStatus: "draft",
         });
       }
+      markInFlight(localId);
       const queryKey = qk.experiments.observations(experimentId);
       await queryClient.cancelQueries({ queryKey });
       const previous =
@@ -179,7 +207,7 @@ export function useCreateObservation() {
       const optimistic: Observation = {
         ...observation,
         experimentId,
-        id: `optimistic-${Date.now()}`,
+        id: `optimistic-${localId}`,
       };
       if (previous) {
         queryClient.setQueryData<
@@ -230,6 +258,7 @@ export function useCreateObservation() {
       }
     },
     onSuccess: (_observation, variables, context) => {
+      toast.success(appStrings.mentor.observationSaved);
       if (context) {
         removeDraft(context.draftId);
       }

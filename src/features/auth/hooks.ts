@@ -55,6 +55,7 @@ export function useLogin() {
       });
     },
     onSuccess: (user) => {
+      queryClient.removeQueries();
       resetOnboarding();
       setMockSessionCookie(user.id);
       queryClient.setQueryData(qk.me, user);
@@ -84,6 +85,7 @@ export function useRegister() {
       });
     },
     onSuccess: (user) => {
+      queryClient.removeQueries();
       resetOnboarding();
       setMockSessionCookie(user.id);
       queryClient.setQueryData(qk.me, user);

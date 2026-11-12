@@ -1,13 +1,8 @@
 import type { Metadata } from "next";
-import { RoutePlaceholder } from "@/components/shared/route-placeholder";
+import { MentorDashboardView } from "@/features/dashboards/components/mentor-pages";
 
 export const metadata: Metadata = { title: "Mentor dashboard" };
 
 export default function MentorDashboardPage() {
-  return (
-    <RoutePlaceholder
-      title="Mentor dashboard"
-      description="Your RAWE and Student READY workspace."
-    />
-  );
+  return <MentorDashboardView />;
 }

@@ -1,10 +1,11 @@
 import { Badge } from "@/components/ui/badge";
+import { appStrings } from "@/content/strings";
 
 const roleDetails = {
-  mentor: { label: "Mentor", variant: "success" },
-  school: { label: "School", variant: "neutral" },
-  admin: { label: "College admin", variant: "info" },
-  "college-admin": { label: "College admin", variant: "info" },
+  mentor: { label: appStrings.common.roleLabel("mentor"), variant: "success" },
+  school: { label: appStrings.common.roleLabel("school"), variant: "neutral" },
+  admin: { label: appStrings.admin.collegeAdmin, variant: "info" },
+  "college-admin": { label: appStrings.admin.collegeAdmin, variant: "info" },
 } as const;
 
 export function RoleBadge({ role }: { role: keyof typeof roleDetails }) {

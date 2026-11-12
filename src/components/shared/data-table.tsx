@@ -5,6 +5,7 @@ import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { appStrings } from "@/content/strings";
 import {
   Table,
   TableBody,
@@ -21,7 +22,7 @@ export type DataTableColumn<T> = {
   sortValue?: (row: T) => string | number | null;
 };
 
-type SortState = {
+export type SortState = {
   columnId: string;
   direction: "ascending" | "descending";
 };
@@ -45,20 +46,27 @@ export function DataTable<T>({
   columns,
   data,
   getRowKey,
+  caption = appStrings.common.dataTable,
+  sortState,
+  onSortChange,
   loading = false,
   loadingRows = 5,
-  emptyTitle = "No results yet",
-  emptyDescription = "There is no data to show here.",
+  emptyTitle = appStrings.common.noResultsTitle,
+  emptyDescription = appStrings.common.noDataDescription,
 }: {
   columns: DataTableColumn<T>[];
   data: readonly T[];
   getRowKey: (row: T, index: number) => string;
+  caption?: string;
+  sortState?: SortState | null;
+  onSortChange?: (sort: SortState | null) => void;
   loading?: boolean;
   loadingRows?: number;
   emptyTitle?: string;
   emptyDescription?: string;
 }) {
-  const [sort, setSort] = useState<SortState | null>(null);
+  const [internalSort, setInternalSort] = useState<SortState | null>(null);
+  const sort = sortState === undefined ? internalSort : sortState;
   const sortedData = useMemo(() => {
     if (!sort) return data;
     const column = columns.find(({ id }) => id === sort.columnId);
@@ -72,20 +80,22 @@ export function DataTable<T>({
   }, [columns, data, sort]);
 
   function toggleSort(columnId: string) {
-    setSort((current) =>
-      current?.columnId === columnId
+    const next: SortState =
+      sort?.columnId === columnId
         ? {
             columnId,
             direction:
-              current.direction === "ascending" ? "descending" : "ascending",
+              sort.direction === "ascending" ? "descending" : "ascending",
           }
-        : { columnId, direction: "ascending" },
-    );
+        : { columnId, direction: "ascending" };
+    if (onSortChange) onSortChange(next);
+    else setInternalSort(next);
   }
 
   return (
-    <div className="border-border bg-card overflow-hidden rounded-xl border">
+    <div className="border-border bg-card overflow-x-auto rounded-xl border">
       <Table>
+        <caption className="sr-only">{caption}</caption>
         <TableHeader>
           <TableRow>
             {columns.map((column) => {
@@ -103,7 +113,7 @@ export function DataTable<T>({
                 >
                   {column.sortValue ? (
                     <Button
-                      className="-ml-3"
+                      className="-ml-3 min-h-11"
                       onClick={() => toggleSort(column.id)}
                       variant="ghost"
                     >

@@ -17,6 +17,8 @@ export const qk = {
     list: (filters: object = {}) => ["experiments", filters] as const,
     detail: (id: string) => ["experiments", id] as const,
     observations: (id: string) => ["experiments", id, "observations"] as const,
+    observationSummary: (id: string) =>
+      ["experiments", id, "observation-summary"] as const,
   },
   placements: {
     list: (filters: object = {}) => ["placements", filters] as const,

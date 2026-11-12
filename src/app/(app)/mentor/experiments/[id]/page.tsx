@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { RoutePlaceholder } from "@/components/shared/route-placeholder";
+import { ExperimentDetailView } from "@/features/dashboards/components/experiment-pages";
 
 export const instant = false;
 
@@ -18,10 +18,5 @@ export default async function MentorExperimentPage({
   params,
 }: ExperimentPageProps) {
   const { id } = await params;
-  return (
-    <RoutePlaceholder
-      title={`Experiment ${id}`}
-      description="View experiment details, progress, and observations."
-    />
-  );
+  return <ExperimentDetailView id={id} role="mentor" />;
 }

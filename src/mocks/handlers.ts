@@ -183,6 +183,10 @@ function createId(prefix: string, items: { id: string }[]) {
 }
 
 const mockOnboardingProfiles = new Map<string, Record<string, unknown>>();
+const mockSchoolIds = new Map<string, string>([
+  ["school-demo", "school-1"],
+  ["school-user-1", "school-1"],
+]);
 
 function getMockSessionUser(request: Request) {
   const sessionCookie = request.headers
@@ -239,6 +243,28 @@ export const handlers: RequestHandler[] = [
       role: parsed.data.role,
     };
     users.push(newUser);
+    if (parsed.data.role === "mentor") {
+      mentors.push({
+        userId: newUser.id,
+        name: newUser.name,
+        college: parsed.data.college,
+        year: parsed.data.year,
+        topics: [],
+        hoursPerWeek: 1,
+      });
+    } else if (parsed.data.role === "school") {
+      const school = schoolSchema.parse({
+        id: createId("school", schools),
+        name: parsed.data.schoolName,
+        village: parsed.data.village,
+        district: parsed.data.district,
+        studentCount: parsed.data.studentCount,
+        grades: "1–8",
+        contactName: parsed.data.name,
+      });
+      schools.push(school);
+      mockSchoolIds.set(newUser.id, school.id);
+    }
     return HttpResponse.json(userSchema.parse(newUser), { status: 201 });
   }),
   http.post(apiPath("/auth/logout"), async ({ request }) => {
@@ -273,7 +299,68 @@ export const handlers: RequestHandler[] = [
     ) {
       return errorResponse(422, "VALIDATION_ERROR", "Please check your profile details.");
     }
-    mockOnboardingProfiles.set(user.id, body.data as Record<string, unknown>);
+    const data = body.data as Record<string, unknown>;
+    mockOnboardingProfiles.set(user.id, data);
+    if (user.role === "mentor") {
+      const current = findMentorByUserId(user.id);
+      if (current) {
+        const hours = Number(data.hoursPerWeek);
+        const topics = Array.isArray(data.topics)
+          ? data.topics.filter((topic): topic is string => typeof topic === "string")
+          : current.topics;
+        const placement =
+          typeof data.village === "string" &&
+          typeof data.district === "string" &&
+          typeof data.state === "string" &&
+          typeof data.startDate === "string" &&
+          typeof data.endDate === "string"
+            ? placementSchema.parse({
+                id: current.rawePlacement?.id ?? `placement-${user.id}`,
+                village: data.village,
+                district: data.district,
+                state: data.state,
+                startDate: data.startDate,
+                endDate: data.endDate,
+                status:
+                  data.startDate > new Date().toISOString().slice(0, 10)
+                    ? "upcoming"
+                    : data.endDate < new Date().toISOString().slice(0, 10)
+                      ? "completed"
+                      : "active",
+              })
+            : current.rawePlacement;
+        replaceMentor(user.id, {
+          ...(typeof data.college === "string" ? { college: data.college } : {}),
+          ...(typeof data.year === "string" ? { year: data.year } : {}),
+          ...(Number.isInteger(hours) && [1, 3, 5].includes(hours)
+            ? { hoursPerWeek: hours as 1 | 3 | 5 }
+            : {}),
+          topics,
+          ...(placement ? { rawePlacement: placement } : {}),
+        });
+      }
+    } else if (user.role === "school") {
+      const schoolId = mockSchoolIds.get(user.id);
+      const school = schools.find((item) => item.id === schoolId);
+      if (school) {
+        const studentCount = Number(data.studentCount);
+        const updated = schoolSchema.parse({
+          ...school,
+          ...(typeof data.schoolName === "string" ? { name: data.schoolName } : {}),
+          ...(typeof data.village === "string" ? { village: data.village } : {}),
+          ...(typeof data.district === "string" ? { district: data.district } : {}),
+          ...(typeof data.grades === "string" ? { grades: data.grades } : {}),
+          ...(Number.isInteger(studentCount) && studentCount >= 0
+            ? { studentCount }
+            : {}),
+          ...(typeof data.contactName === "string"
+            ? { contactName: data.contactName }
+            : {}),
+        });
+        const index = schools.findIndex((item) => item.id === school.id);
+        if (index >= 0) schools[index] = updated;
+      }
+    }
     return HttpResponse.json(successResponseSchema.parse({ success: true }));
   }),
 
@@ -321,10 +408,13 @@ export const handlers: RequestHandler[] = [
     const failure = await beforeResponse(request, true);
     if (failure) return failure;
     const url = new URL(request.url);
+    const user = getMockSessionUser(request);
     const source =
-      url.searchParams.get("mine") === "true"
-        ? matches.filter((match) => match.mentorId === users[0]?.id)
-        : matches;
+      url.searchParams.get("mine") === "true" && user?.role === "mentor"
+        ? matches.filter((match) => match.mentorId === user.id)
+        : url.searchParams.get("mine") === "true" && user?.role === "school"
+          ? matches.filter((match) => match.schoolId === mockSchoolIds.get(user.id))
+          : matches;
     return pageResponse(request, source);
   }),
   http.post(apiPath("/matches"), async ({ request }) => {

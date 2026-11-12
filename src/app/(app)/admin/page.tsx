@@ -1,13 +1,8 @@
 import type { Metadata } from "next";
-import { RoutePlaceholder } from "@/components/shared/route-placeholder";
+import { AdminDashboardView } from "@/features/dashboards/components/admin-pages";
 
 export const metadata: Metadata = { title: "Admin dashboard" };
 
 export default function AdminDashboardPage() {
-  return (
-    <RoutePlaceholder
-      title="Admin dashboard"
-      description="Coordinate the KSS pilot across students and schools."
-    />
-  );
+  return <AdminDashboardView />;
 }

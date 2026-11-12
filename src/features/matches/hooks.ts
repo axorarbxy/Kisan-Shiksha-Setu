@@ -15,6 +15,8 @@ import {
   notifyMutationError,
   type ListFilters,
 } from "@/features/query-utils";
+import { toast } from "sonner";
+import { appStrings } from "@/content/strings";
 
 export function useMatches(filters: ListFilters = {}) {
   return useInfiniteQuery({
@@ -36,6 +38,7 @@ export function useCreateMatch() {
         schema: matchSchema,
       }),
     onSuccess: () => {
+      toast.success(appStrings.mentor.matchRequestSent);
       void queryClient.invalidateQueries({ queryKey: ["matches"] });
     },
     onError: notifyMutationError,
@@ -52,6 +55,7 @@ export function useUpdateMatch() {
         schema: matchSchema,
       }),
     onSuccess: () => {
+      toast.success(appStrings.mentor.matchUpdated);
       void queryClient.invalidateQueries({ queryKey: ["matches"] });
     },
     onError: notifyMutationError,

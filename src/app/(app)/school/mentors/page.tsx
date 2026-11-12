@@ -1,13 +1,8 @@
 import type { Metadata } from "next";
-import { RoutePlaceholder } from "@/components/shared/route-placeholder";
+import { SchoolMentorsView } from "@/features/dashboards/components/school-pages";
 
 export const metadata: Metadata = { title: "Mentors" };
 
 export default function SchoolMentorsPage() {
-  return (
-    <RoutePlaceholder
-      title="Mentors"
-      description="Meet the mentors supporting your school."
-    />
-  );
+  return <SchoolMentorsView />;
 }

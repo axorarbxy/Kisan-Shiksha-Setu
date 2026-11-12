@@ -51,6 +51,7 @@ import type { NavItem, Role } from "@/config/nav";
 import { useDevSessionStore } from "@/stores/dev-session-store";
 import { useLogin, useLogout, useMe } from "@/features/auth/hooks";
 import { RoleGate } from "@/components/shared/role-gate";
+import { appStrings } from "@/content/strings";
 
 function getPathRole(pathname: string): Role | null {
   return getRole(pathname.split("/")[1]);
@@ -64,7 +65,7 @@ function getRole(value: string | undefined): Role | null {
 
 function getBreadcrumbLabel(path: string, role: Role) {
   if (path === "/settings") {
-    return "Settings";
+    return appStrings.common.settings;
   }
   const navItem = [...navByRole[role], settingsNavItem].find(
     (item) => item.href === path,
@@ -84,7 +85,7 @@ function AppBreadcrumb({ pathname, role }: { pathname: string; role: Role }) {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbPage>Settings</BreadcrumbPage>
+            <BreadcrumbPage>{appStrings.common.settings}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -141,7 +142,9 @@ function AppNavigation({ role }: { role: Role }) {
       </SidebarHeader>
       <SidebarContent className="pt-3">
         <SidebarGroup>
-          <SidebarGroupLabel>{role} workspace</SidebarGroupLabel>
+          <SidebarGroupLabel>
+            {appStrings.common.workspaceLabel(role)}
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item: NavItem) => {
@@ -156,7 +159,7 @@ function AppNavigation({ role }: { role: Role }) {
                     <SidebarMenuButton
                       asChild
                       isActive={active}
-                      className="text-forest-800 data-[active=true]:bg-forest-100 data-[active=true]:text-forest-800 h-10 data-[active=true]:relative data-[active=true]:before:absolute data-[active=true]:before:inset-y-1 data-[active=true]:before:left-0 data-[active=true]:before:w-0.5 data-[active=true]:before:bg-purple-500"
+                      className="text-forest-800 data-[active=true]:bg-forest-100 data-[active=true]:text-forest-800 h-11 data-[active=true]:relative data-[active=true]:before:absolute data-[active=true]:before:inset-y-1 data-[active=true]:before:left-0 data-[active=true]:before:w-0.5 data-[active=true]:before:bg-purple-500"
                     >
                       <Link href={item.href}>
                         <Icon aria-hidden="true" />
@@ -185,7 +188,7 @@ function AppUserMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          aria-label="Open user menu"
+          aria-label={appStrings.common.openUserMenu}
           className="gap-2"
           size="sm"
           variant="ghost"
@@ -193,23 +196,25 @@ function AppUserMenu() {
           <span className="bg-forest-100 text-forest-800 grid size-7 place-items-center rounded-full text-xs font-semibold">
             KS
           </span>
-          <span className="hidden sm:inline">My account</span>
+          <span className="hidden sm:inline">{appStrings.common.myAccount}</span>
           <ChevronDown aria-hidden="true" className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">
-        <DropdownMenuLabel>Kisan Shiksha Setu</DropdownMenuLabel>
+        <DropdownMenuLabel>{appStrings.common.productName}</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => router.push("/settings")}>
           <Settings2 aria-hidden="true" />
-          Settings
+          {appStrings.common.settings}
         </DropdownMenuItem>
         <DropdownMenuItem
           disabled={logout.isPending}
           onSelect={() => logout.mutate()}
         >
           <LogOut aria-hidden="true" />
-          {logout.isPending ? "Logging out…" : "Log out"}
+          {logout.isPending
+            ? appStrings.common.loggingOut
+            : appStrings.common.logout}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -248,8 +253,8 @@ function DevelopmentRoleSwitcher({ role }: { role: Role }) {
       }}
     >
       <SelectTrigger
-        aria-label="Switch development role"
-        className="h-8 w-auto min-w-32"
+        aria-label={appStrings.common.switchDevelopmentRole}
+        className="min-h-11 w-auto min-w-32"
         size="sm"
       >
         <SelectValue />
@@ -257,8 +262,7 @@ function DevelopmentRoleSwitcher({ role }: { role: Role }) {
       <SelectContent align="end">
         {(["mentor", "school", "admin"] as const).map((nextRole) => (
           <SelectItem key={nextRole} value={nextRole}>
-            {nextRole[0]?.toUpperCase()}
-            {nextRole.slice(1)}
+            {appStrings.common.roleLabel(nextRole)}
           </SelectItem>
         ))}
       </SelectContent>
@@ -283,7 +287,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <AppNavigation role={role} />
       <SidebarInset className="min-h-screen min-w-0">
         <header className="border-border bg-background/95 sticky top-0 z-10 flex h-16 items-center gap-3 border-b px-4 backdrop-blur sm:px-6">
-          <SidebarTrigger aria-label="Toggle navigation" />
+          <SidebarTrigger aria-label={appStrings.common.toggleNavigation} />
           <div className="min-w-0 flex-1">
             <AppBreadcrumb pathname={pathname} role={role} />
           </div>
